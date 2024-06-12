@@ -1,0 +1,53 @@
+version: '8.3'
+services:
+  web:
+    depends_on:
+      - api
+    build: ./frontend
+    container_name: web_c
+    ports:
+      - '5173:5173'
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    develop:
+      watch:
+        - path: ./frontend/package.json
+          action: rebuild
+
+        - path: ./frontend/package-lock.json
+          action: rebuild
+        
+        - path: ./frontend
+          #target is used only in sync and it is basicaly where the application is located in the container (it will be updated as soon as the source code )
+          target: /app
+          action: sync
+  
+  api:
+    depends_on:
+      - db
+    build: ./backend
+    container_name: api_c
+    ports:
+      - '8000:8000'
+    environment:
+      - DB_URL=mongodb://db/anime
+    develop:
+      watch:
+        - path: ./backend/package.json
+          action: rebuild
+        - path: ./backend/package-lock.json
+          action: rebuild
+        - path: ./backend
+          target: /app
+          action: sync
+
+  db:
+    image: mongo:latest
+    container_name: db_c
+    ports:
+      - "27017:27017"
+    volumes:
+      - anime:/data/db
+
+volumes:
+  anime:
